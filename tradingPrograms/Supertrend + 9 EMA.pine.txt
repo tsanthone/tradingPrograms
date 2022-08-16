@@ -1,0 +1,41 @@
+//@version=5
+strategy("Supertrend + 9 EMA Strategy FAST", overlay = true, process_orders_on_close = true, calc_on_every_tick = true)
+
+source = close
+multiplier = 3
+ATR = ta.atr(10)
+
+trendEMA = ta.ema(source, 9)
+down = ((high + low) / 2) + (multiplier * ATR)
+downOne = nz(down[1], down)
+down := close[1] < downOne ? math.min(down, downOne) : down
+up = ((high + low) / 2) - (multiplier * ATR)
+upOne = nz(up[1], up)
+up := close[1] > upOne ? math.max(up, upOne) : up
+trend = 1
+trend := nz(trend[1], trend)
+trend := trend == -1 and close > downOne ? 1 : trend == 1 and close < upOne ? -1 : trend
+
+numShares = strategy.equity / source
+
+if(numShares > 1000000000)
+    numShares := 1000000000
+    
+if(numShares < 0)
+    numShares := 0
+
+plot(trendEMA, "20 Period EMA", color = #b60ac2)
+plot(trend == -1 ? down : na, "Upper Sell Line", style = plot.style_linebr, color = color.red)
+plot(trend == 1 ? up : na, "Lower Buy Line", style = plot.style_linebr, color = color.green)
+
+if(trend == 1 and ta.crossunder(source, trendEMA))
+    strategy.entry("Long", strategy.long, qty = numShares)
+
+if(ta.crossover(source, trendEMA) or trend != trend[1])
+    strategy.close("Long")
+
+if(trend == -1 and ta.crossover(source, trendEMA))
+    strategy.entry("Short", strategy.short, qty = numShares)
+    
+if(ta.crossunder(source, trendEMA) or trend != trend[1])
+    strategy.close("Short")

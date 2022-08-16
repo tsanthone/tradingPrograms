@@ -1,0 +1,32 @@
+//@version=5
+strategy('Takeshi Kotegawa Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+
+basis = ta.sma(source, 25)
+devOne = ta.stdev(source, 25)
+upperOne = basis + devOne
+lowerOne = basis - devOne
+
+sma = ta.sma(source, 14)
+KRI = 100 * (source - sma) / sma
+
+up = ta.rma(math.max(ta.change(source), 0), 14)
+down = ta.rma(-math.min(ta.change(source), 0), 14)
+RSI = down == 0 ? 100 : up == 0 ? 0 : 100 - 100 / (1 + up / down)
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(basis, 'Basis', color=color.new(#ffffff, 0))
+plot(upperOne, 'Upper One Stdev', color=color.new(#b60ac2, 0))
+plot(lowerOne, 'Lower One Stdev', color=color.new(#b60ac2, 0))
+
+if source < lowerOne and KRI < -.15 and RSI < 30
+    strategy.entry('Long', strategy.long, qty=numShares)
+
+if source > basis
+    strategy.close('Long')

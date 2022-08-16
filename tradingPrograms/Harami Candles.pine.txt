@@ -1,0 +1,18 @@
+//@version=5
+strategy("Harami Candles Strategy", overlay = true, process_orders_on_close = true, calc_on_every_tick = true)
+
+bearMin = open[1] - ((open[1] - close[1]) / 2)
+
+numShares = strategy.equity / close
+
+if(numShares > 1000000000)
+    numShares := 1000000000
+
+if(close[1] < open[1] and close > open and open > close[1] and close < open[1])
+    strategy.entry("Long", strategy.long, qty = numShares)
+    
+if(close[1] < open[1] and close > open and close > bearMin and close < open[1] and open < close[1])
+    strategy.entry("Long", strategy.long, qty = numShares)
+
+if(close > high[1])
+    strategy.close("Long")

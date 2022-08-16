@@ -1,0 +1,24 @@
+//@version=5
+strategy('10 RSI Pullback Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+
+trendEMA = ta.ema(source, 200)
+
+up = ta.rma(math.max(ta.change(source), 0), 7)
+down = ta.rma(-math.min(ta.change(source), 0), 14)
+rsi = down == 0 ? 100 : up == 0 ? 0 : 100 - 100 / (1 + up / down)
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(trendEMA, '200 Period EMA', color=color.new(#b60ac2, 0))
+
+if source > trendEMA and rsi < 30
+    strategy.entry('Long', strategy.long, qty=numShares)
+
+if rsi > 50 or ta.barssince(strategy.position_size == 0) == 10
+    strategy.close('Long')

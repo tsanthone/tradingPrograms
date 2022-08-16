@@ -1,0 +1,35 @@
+//@version=5
+strategy('3 EMA + Stochastic RSI Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+
+rsiCalc = ta.rsi(source, 14)
+k = ta.sma(ta.stoch(rsiCalc, rsiCalc, rsiCalc, 14), 3)
+d = ta.sma(k, 3)
+
+shortEMA = ta.ema(source, 8)
+mediumEMA = ta.ema(source, 14)
+longEMA = ta.ema(source, 50)
+
+ATR = ta.atr(14) * 1.5
+lossPercent = (source - (low - ATR)) / source * 3
+profitPercent = (high + ATR - source) / source * 2
+profitTarget = source + source * profitPercent
+lossTarget = source - source * lossPercent
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(shortEMA, '8 Period EMA', color=color.new(#b60ac2, 0))
+plot(mediumEMA, '14 Period EMA', color=color.new(#06d1c7, 0))
+plot(longEMA, '50 Period EMA', color=color.new(#e3cc00, 0))
+plot(profitTarget, 'Profit Target', color=color.new(#2cd158, 0))
+plot(lossTarget, 'Loss Target', color=color.new(#f50019, 0))
+
+if shortEMA > mediumEMA and mediumEMA > longEMA and ta.crossover(k, d)
+    strategy.entry('Long', strategy.long, qty=numShares)
+
+strategy.exit('Exit Long', from_entry='Long', profit=source * profitPercent / syminfo.mintick, loss=source * lossPercent / syminfo.mintick)

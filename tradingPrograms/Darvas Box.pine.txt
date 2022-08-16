@@ -1,0 +1,17 @@
+//@version=5
+strategy('Darvas Box Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+length = 5
+priceHigh = ta.highest(source[1], length)
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(priceHigh, 'Price High', color=color.new(#ffffff, 0))
+
+if source >= priceHigh
+    strategy.entry('Long', strategy.long, qty=numShares)

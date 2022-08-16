@@ -1,0 +1,26 @@
+//@version=5
+//Buy: stock 20% up from its lowest low of the past 50 days.
+//Sell: Stock down 20% from its highest high of the past 50 days.
+strategy('20 Flipper Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+
+trendEMA = ta.ema(source, 200)
+buyBar = ta.lowest(source, 50) * 1.1
+sellBar = ta.highest(source, 50) * .9
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(trendEMA, '200 Period EMA', color=color.new(#b60ac2, 0))
+plot(buyBar, 'Buy Signal', color=color.new(#edbe3e, 0))
+plot(sellBar, 'Sell Signal', color=color.new(#24c9ae, 0))
+
+if ta.crossover(source, buyBar)
+    strategy.entry('Long', strategy.long, qty=numShares)
+
+if ta.crossunder(source, sellBar)
+    strategy.close('Long')

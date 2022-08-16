@@ -1,0 +1,33 @@
+//@version=5
+strategy('My Strategy', overlay=true, process_orders_on_close=true, calc_on_every_tick=true)
+
+source = close
+
+trendEMA = ta.ema(source, 200)
+
+fastMA = ta.ema(source, 12)
+slowMA = ta.ema(source, 26)
+macd = fastMA - slowMA
+signal = ta.ema(macd, 9)
+
+PSAR = ta.sar(.02, .02, .2)
+
+pnlPercent = (source - PSAR) / source
+profitTarget = source + source * pnlPercent
+lossTarget = source - source * pnlPercent
+
+numShares = strategy.equity / source
+
+if numShares > 1000000000
+    numShares := 1000000000
+    numShares
+
+plot(trendEMA, '200 Period EMA', color=color.new(#b60ac2, 0))
+plot(PSAR, 'Parabolic SAR', style=plot.style_cross, color=color.new(#ffffff, 0))
+plot(profitTarget, 'Profit Target', color=color.new(#2cd158, 0))
+plot(lossTarget, 'Loss Target', color=color.new(#f50019, 0))
+
+if macd > signal and macd[1] < signal[1] and source > trendEMA and PSAR < source
+    strategy.entry('Long', strategy.long, qty=numShares)
+
+strategy.exit('Exit Long', from_entry='Long', profit=source * pnlPercent / syminfo.mintick, loss=source * pnlPercent / syminfo.mintick)
